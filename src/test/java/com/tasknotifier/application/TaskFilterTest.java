@@ -15,9 +15,9 @@ class TaskFilterTest {
     @Test
     void filtersBySearchAndStatus() {
         Task a = new Task(1L, "Alpha", "work item", LocalDateTime.now(), Priority.MEDIUM, TaskStatus.TODO,
-                List.of("work"), List.of(), "notes/a.md", RecurrenceRule.none(), ReminderSettings.defaults(), LocalDateTime.now());
+                List.of("work"), "task-detail/a.md", RecurrenceRule.none(), ReminderSettings.defaults(), LocalDateTime.now());
         Task b = new Task(2L, "Beta", "personal", LocalDateTime.now(), Priority.HIGH, TaskStatus.DONE,
-                List.of("home"), List.of(), "notes/b.md", RecurrenceRule.none(), ReminderSettings.defaults(), LocalDateTime.now());
+                List.of("home"), "task-detail/b.md", RecurrenceRule.none(), ReminderSettings.defaults(), LocalDateTime.now());
 
         List<Task> result = filter.filter(List.of(a, b), "work", TaskStatus.TODO, null, TaskFilter.DueRange.ALL, null);
         assertEquals(1, result.size());

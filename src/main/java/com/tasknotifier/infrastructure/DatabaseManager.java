@@ -41,7 +41,6 @@ public class DatabaseManager {
                     priority TEXT NOT NULL,
                     status TEXT NOT NULL,
                     tags TEXT,
-                    references_text TEXT,
                     markdown_path TEXT NOT NULL,
                     recurrence_type TEXT NOT NULL,
                     recurrence_end_date TEXT,

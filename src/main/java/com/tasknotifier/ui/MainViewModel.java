@@ -46,13 +46,13 @@ public class MainViewModel {
     }
 
     public void saveTask(Long id, String title, String summary, LocalDate dueDate, String dueTime,
-                         Priority priority, TaskStatus status, String tags, String references,
+                         Priority priority, TaskStatus status, String tags,
                          String markdownPath, RecurrenceType recurrenceType, LocalDate recurrenceEndDate,
                          boolean reminderEnabled, int minutesBeforeDue, int overdueMinutes, boolean reminderSound) {
 
         LocalDateTime due = dueDate == null ? null : LocalDateTime.of(dueDate, parseTime(dueTime));
         Task task = new Task(id, title, summary, due, priority, status,
-                tokenize(tags), tokenize(references), markdownPath,
+                tokenize(tags), markdownPath,
                 new RecurrenceRule(recurrenceType, recurrenceEndDate, new java.util.HashSet<>()),
                 new ReminderSettings(reminderEnabled, minutesBeforeDue, overdueMinutes, reminderSound),
                 LocalDateTime.now());

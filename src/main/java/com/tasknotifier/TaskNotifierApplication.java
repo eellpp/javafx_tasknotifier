@@ -10,7 +10,9 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class TaskNotifierApplication extends Application {
@@ -21,7 +23,12 @@ public class TaskNotifierApplication extends Application {
     public void start(Stage stage) throws Exception {
         Application.setUserAgentStylesheet(new PrimerLight().getUserAgentStylesheet());
 
-        DatabaseManager db = new DatabaseManager(Path.of("data/tasknotifier.db"));
+        Path taskDetailDir = AppPaths.taskDetailDirectory();
+        Files.createDirectories(taskDetailDir);
+        UiStateStore uiStateStore = new UiStateStore();
+        UiStateStore.UiState savedUiState = uiStateStore.load(taskDetailDir);
+
+        DatabaseManager db = new DatabaseManager(AppPaths.databaseFile());
         db.migrate();
         TaskRepository repository = new SQLiteTaskRepository(db);
         RecurrenceService recurrenceService = new RecurrenceService();
@@ -36,10 +43,17 @@ public class TaskNotifierApplication extends Application {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/main-view.fxml"));
         Parent root = loader.load();
         MainController controller = loader.getController();
+        controller.setStage(stage);
+        controller.setDefaultMarkdownFolder(taskDetailDir);
         controller.setViewModel(viewModel);
 
+        stage.initStyle(StageStyle.UNDECORATED);
         stage.setTitle("Task Notifier v1");
         stage.setScene(new Scene(root, 1280, 760));
+        stage.setMinWidth(980);
+        stage.setMinHeight(620);
+        controller.applyUiState(savedUiState);
+        stage.setOnCloseRequest(event -> uiStateStore.save(controller.captureUiState()));
         stage.show();
     }
 

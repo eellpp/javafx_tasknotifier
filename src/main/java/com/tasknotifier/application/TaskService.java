@@ -40,7 +40,7 @@ public class TaskService {
         if (task.getStatus() == TaskStatus.DONE && task.getRecurrenceRule().isRecurring() && task.getDueDateTime() != null) {
             task = new Task(task.getId(), task.getTitle(), task.getSummary(),
                     recurrenceService.nextOccurrence(task.getDueDateTime(), task.getRecurrenceRule()),
-                    task.getPriority(), TaskStatus.TODO, task.getTags(), task.getReferences(), task.getMarkdownPath(),
+                    task.getPriority(), TaskStatus.TODO, task.getTags(), task.getMarkdownPath(),
                     task.getRecurrenceRule(), task.getReminderSettings(), LocalDateTime.now());
         }
         save(task);

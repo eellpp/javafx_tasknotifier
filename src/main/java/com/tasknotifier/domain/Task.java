@@ -14,7 +14,6 @@ public class Task {
     private Priority priority;
     private TaskStatus status;
     private List<String> tags;
-    private List<String> references;
     private String markdownPath;
     private RecurrenceRule recurrenceRule;
     private ReminderSettings reminderSettings;
@@ -27,7 +26,6 @@ public class Task {
                 Priority priority,
                 TaskStatus status,
                 List<String> tags,
-                List<String> references,
                 String markdownPath,
                 RecurrenceRule recurrenceRule,
                 ReminderSettings reminderSettings,
@@ -39,7 +37,6 @@ public class Task {
         this.priority = priority == null ? Priority.MEDIUM : priority;
         this.status = status == null ? TaskStatus.TODO : status;
         this.tags = tags == null ? new ArrayList<>() : tags;
-        this.references = references == null ? new ArrayList<>() : references;
         this.markdownPath = Objects.requireNonNull(markdownPath, "markdownPath is required").trim();
         this.recurrenceRule = recurrenceRule == null ? RecurrenceRule.none() : recurrenceRule;
         this.reminderSettings = reminderSettings == null ? ReminderSettings.defaults() : reminderSettings;
@@ -63,7 +60,6 @@ public class Task {
     public Priority getPriority() { return priority; }
     public TaskStatus getStatus() { return status; }
     public List<String> getTags() { return tags; }
-    public List<String> getReferences() { return references; }
     public String getMarkdownPath() { return markdownPath; }
     public RecurrenceRule getRecurrenceRule() { return recurrenceRule; }
     public ReminderSettings getReminderSettings() { return reminderSettings; }

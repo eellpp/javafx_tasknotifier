@@ -12,12 +12,17 @@ A desktop offline task manager with reminders, recurrence, and linked markdown n
 
 ## Run
 ```bash
-mvn clean javafx:run
+mvn -Pmac-aarch64 clean javafx:run
 ```
+
+Profile options:
+- Apple Silicon mac: `-Pmac-aarch64`
+- Intel mac: `-Pmac-x64`
+- Windows x64: `-Pwin-x64`
 
 ## Build (fat JAR)
 ```bash
-mvn clean package
+mvn -Pmac-aarch64 clean package
 java -jar target/javafx-task-notifier-1.0.0.jar
 ```
 
@@ -32,7 +37,7 @@ Important:
 
 ### 1) Build the app JAR first
 ```bash
-mvn clean package
+mvn -Pmac-aarch64 clean package
 ```
 
 ### 2) Generate Windows executable (run on Windows)
@@ -74,12 +79,12 @@ mvn test
 ```
 
 ## Features Included in v1
-- Task create/edit/delete with title, summary, due datetime, priority, status, tags, references, markdown path.
+- Task create/edit/delete with title, summary, due datetime, priority, status, tags, and markdown path.
 - Recurrence (`NONE`, `DAILY`, `WEEKLY`, `MONTHLY`) with optional end date.
 - Skip next recurrence occurrence from table row context menu.
 - Pending-centric dashboard counts (overdue / due today / upcoming).
 - Filtering by status, priority, due-range, tag and search by title/summary/tag.
-- Quick table columns for title, due, recurrence, tags, reference preview, markdown path.
+- Quick table columns for title, due, recurrence, tags, and markdown path.
 - `Open File` action from row context menu.
 - Urgent/high and overdue visual highlighting.
 - Background reminder scheduler and in-app notifications.
@@ -99,15 +104,12 @@ mvn test
 - `com.tasknotifier.application`: use-case/services/repository contracts.
 - `com.tasknotifier.domain`: entities and value objects.
 - `com.tasknotifier.infrastructure`: SQLite, migration, notifications.
-- `db/`: SQL migration + seed scripts.
 
 ## Database + Migration
-- Runtime DB path default: `data/tasknotifier.db`.
+- Runtime DB path default is OS-specific:
+  - Windows: `%APPDATA%\\TaskNotifier\\tasknotifier.db`
+  - macOS: `~/Library/Application Support/TaskNotifier/tasknotifier.db`
 - App migration runs on startup via `DatabaseManager`.
-- SQL snapshot: `db/migrations_v1.sql`.
-
-## Seed Data
-Use `db/seed_v1.sql` if you want starter records.
 
 ## Markdown storage/path handling rules
 - Task metadata is stored in SQLite.
@@ -115,6 +117,16 @@ Use `db/seed_v1.sql` if you want starter records.
 - On save, app creates the file if missing and writes starter content.
 - Absolute or relative paths are accepted; relative paths resolve from current working directory.
 - If a markdown file was moved/deleted, the app keeps task metadata and does not crash; open action no-ops if missing.
+- Default task-detail folder is OS-specific:
+  - Windows: `%APPDATA%\\TaskNotifier\\task-detail\\`
+  - macOS: `~/Library/Application Support/TaskNotifier/task-detail/`
+
+## UI state persistence
+- The app persists UI state between restarts using Java Preferences:
+  - Selected theme
+  - Notifications ON/OFF toggle
+  - Last selected task-detail folder
+  - Window size/position/maximized state
 
 ## Notes on tests and exemptions
 - Domain/application/infrastructure logic has concrete unit/integration tests.

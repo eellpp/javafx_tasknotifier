@@ -44,9 +44,6 @@ This document is an implementation contract for coding agents. Decisions in this
   - Priority (`LOW`, `MEDIUM`, `HIGH`)
   - Status (`TODO`, `IN_PROGRESS`, `DONE`, `ARCHIVED`)
   - Tags (optional, multiple)
-  - References (optional, multiple text entries), including:
-    - Email reference text (for example, an email subject line)
-    - Useful links/URLs
   - Markdown task detail file path (required at save time)
 - Edit existing task fields.
 - Delete task using hard-delete in v1.
@@ -87,7 +84,6 @@ This document is an implementation contract for coding agents. Decisions in this
   - Due date
   - Recurrence summary
   - Tags (for example: `project`, `work`, `personal`)
-  - Reference preview (email subject and/or first URL)
   - Link/path to markdown file
 - Provide an explicit `Open File` action from task detail and list row context menu.
 - v1 UI does not need to render markdown content inside the app.
@@ -125,7 +121,7 @@ This document is an implementation contract for coding agents. Decisions in this
 - DB schema versioning via migration mechanism.
 - Data survives app restarts.
 - Handle DB file corruption/open failures with user-friendly recovery message.
-- Store quick task metadata in SQLite (title, dates, status, priority, tags, recurrence, references, markdown file path).
+- Store quick task metadata in SQLite (title, dates, status, priority, tags, recurrence, markdown file path).
 - Save full task detail/content in a markdown (`.md`) file per task.
 - Markdown file content is free-form user text.
 - Persist and manage file links safely:
@@ -247,7 +243,7 @@ This document is an implementation contract for coding agents. Decisions in this
 - Recurring tasks are fully functional in create/edit/schedule flows.
 - App runs on both macOS and Windows.
 - Windows tray support attempted with documented fallback behavior if unavailable.
-- Task metadata appears in list/table quick columns (title, due, recurrence, tags, references, file link).
+- Task metadata appears in list/table quick columns (title, due, recurrence, tags, file link).
 - Each task has a linked markdown file containing free-form details, and users can open that file from the UI.
 - `Pending Today`, `Pending This Week`, and `All Pending` sections are implemented and usable.
 - Urgent/overdue tasks are visually highlighted with clear red-based urgency indicators.

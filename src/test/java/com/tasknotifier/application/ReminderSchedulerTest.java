@@ -17,7 +17,7 @@ class ReminderSchedulerTest {
         TaskRepository repo = new InMemoryRepo();
         TaskService service = new TaskService(repo, new RecurrenceService());
         service.save(new Task(null, "Due soon", "", LocalDateTime.now().plusMinutes(5), Priority.MEDIUM, TaskStatus.TODO,
-                List.of(), List.of(), "notes/t.md", RecurrenceRule.none(), new ReminderSettings(true, 10, 60, false), LocalDateTime.now()));
+                List.of(), "task-detail/t.md", RecurrenceRule.none(), new ReminderSettings(true, 10, 60, false), LocalDateTime.now()));
         ReminderScheduler scheduler = new ReminderScheduler(service, (title, message) -> messages.add(title + message));
         scheduler.check();
         assertEquals(1, messages.size());

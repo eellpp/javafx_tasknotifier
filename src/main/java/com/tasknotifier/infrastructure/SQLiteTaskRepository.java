@@ -27,10 +27,10 @@ public class SQLiteTaskRepository implements TaskRepository {
 
     private Task insert(Task task) {
         String sql = """
-                INSERT INTO tasks(title, summary, due_date_time, priority, status, tags, references_text, markdown_path,
+                INSERT INTO tasks(title, summary, due_date_time, priority, status, tags, markdown_path,
                 recurrence_type, recurrence_end_date, recurrence_skipped_dates, reminder_enabled, reminder_minutes_before_due,
                 reminder_overdue_repeat, reminder_sound_enabled, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
         try (Connection conn = db.connection(); PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             bind(ps, task);
@@ -46,13 +46,13 @@ public class SQLiteTaskRepository implements TaskRepository {
 
     private Task update(Task task) {
         String sql = """
-                UPDATE tasks SET title=?, summary=?, due_date_time=?, priority=?, status=?, tags=?, references_text=?, markdown_path=?,
+                UPDATE tasks SET title=?, summary=?, due_date_time=?, priority=?, status=?, tags=?, markdown_path=?,
                 recurrence_type=?, recurrence_end_date=?, recurrence_skipped_dates=?, reminder_enabled=?, reminder_minutes_before_due=?,
                 reminder_overdue_repeat=?, reminder_sound_enabled=?, updated_at=? WHERE id=?
                 """;
         try (Connection conn = db.connection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             bind(ps, task);
-            ps.setLong(17, task.getId());
+            ps.setLong(16, task.getId());
             ps.executeUpdate();
             return task;
         } catch (SQLException e) {
@@ -67,16 +67,15 @@ public class SQLiteTaskRepository implements TaskRepository {
         ps.setString(4, t.getPriority().name());
         ps.setString(5, t.getStatus().name());
         ps.setString(6, String.join("|", t.getTags()));
-        ps.setString(7, String.join("|", t.getReferences()));
-        ps.setString(8, t.getMarkdownPath());
-        ps.setString(9, t.getRecurrenceRule().type().name());
-        ps.setString(10, t.getRecurrenceRule().endDate() == null ? null : t.getRecurrenceRule().endDate().toString());
-        ps.setString(11, t.getRecurrenceRule().skippedDates().stream().map(LocalDate::toString).collect(Collectors.joining("|")));
-        ps.setInt(12, t.getReminderSettings().enabled() ? 1 : 0);
-        ps.setInt(13, t.getReminderSettings().minutesBeforeDue());
-        ps.setInt(14, t.getReminderSettings().overdueRepeatMinutes());
-        ps.setInt(15, t.getReminderSettings().soundEnabled() ? 1 : 0);
-        ps.setString(16, t.getUpdatedAt().toString());
+        ps.setString(7, t.getMarkdownPath());
+        ps.setString(8, t.getRecurrenceRule().type().name());
+        ps.setString(9, t.getRecurrenceRule().endDate() == null ? null : t.getRecurrenceRule().endDate().toString());
+        ps.setString(10, t.getRecurrenceRule().skippedDates().stream().map(LocalDate::toString).collect(Collectors.joining("|")));
+        ps.setInt(11, t.getReminderSettings().enabled() ? 1 : 0);
+        ps.setInt(12, t.getReminderSettings().minutesBeforeDue());
+        ps.setInt(13, t.getReminderSettings().overdueRepeatMinutes());
+        ps.setInt(14, t.getReminderSettings().soundEnabled() ? 1 : 0);
+        ps.setString(15, t.getUpdatedAt().toString());
     }
 
     @Override
@@ -133,7 +132,6 @@ public class SQLiteTaskRepository implements TaskRepository {
                 Priority.valueOf(rs.getString("priority")),
                 TaskStatus.valueOf(rs.getString("status")),
                 split(rs.getString("tags")),
-                split(rs.getString("references_text")),
                 rs.getString("markdown_path"),
                 rule,
                 reminder,

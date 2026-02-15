@@ -4,30 +4,39 @@ import atlantafx.base.theme.*;
 import com.tasknotifier.application.TaskFilter;
 import com.tasknotifier.application.TaskService;
 import com.tasknotifier.domain.*;
+import com.tasknotifier.infrastructure.UiStateStore;
 import javafx.application.Application;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
 import javafx.scene.input.KeyCode;
 import javafx.stage.DirectoryChooser;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import javafx.geometry.Rectangle2D;
 
 public class MainController {
 
+    @FXML private HBox windowBar;
     @FXML private TableView<Task> taskTable;
     @FXML private TableColumn<Task, String> titleColumn;
     @FXML private TableColumn<Task, String> dueColumn;
     @FXML private TableColumn<Task, String> recurrenceColumn;
     @FXML private TableColumn<Task, String> tagsColumn;
-    @FXML private TableColumn<Task, String> referenceColumn;
     @FXML private TableColumn<Task, String> markdownColumn;
     @FXML private TextField searchField;
+    @FXML private Button newTaskButton;
+    @FXML private Button saveTaskButton;
+    @FXML private Button focusSearchButton;
     @FXML private ComboBox<String> themeBox;
     @FXML private ComboBox<TaskStatus> statusFilter;
     @FXML private ComboBox<Priority> priorityFilter;
@@ -45,7 +54,6 @@ public class MainController {
     @FXML private ComboBox<Priority> priorityBox;
     @FXML private ComboBox<TaskStatus> statusBox;
     @FXML private TextField tagsField;
-    @FXML private TextField refsField;
     @FXML private TextField markdownPathField;
     @FXML private ComboBox<RecurrenceType> recurrenceBox;
     @FXML private DatePicker recurrenceEndDatePicker;
@@ -54,11 +62,31 @@ public class MainController {
     @FXML private Spinner<Integer> overdueRepeatSpinner;
     @FXML private CheckBox reminderSoundBox;
     @FXML private CheckBox notificationsMasterToggle;
+    @FXML private Button minimizeButton;
+    @FXML private Button maximizeButton;
+    @FXML private Button closeButton;
 
     private MainViewModel viewModel;
     private Long editingTaskId;
     private final Map<String, Theme> themes = buildThemes();
-    private Path selectedMarkdownFolder = Path.of("notes");
+    private Path selectedMarkdownFolder = Path.of("task-detail");
+    private Stage stage;
+    private double dragOffsetX;
+    private double dragOffsetY;
+    private boolean windowMaximized;
+    private double restoreX;
+    private double restoreY;
+    private double restoreWidth;
+    private double restoreHeight;
+
+    public void setStage(Stage stage) {
+        this.stage = stage;
+    }
+
+    public void setDefaultMarkdownFolder(Path folder) {
+        if (folder == null) return;
+        selectedMarkdownFolder = folder;
+    }
 
     public void setViewModel(MainViewModel viewModel) {
         this.viewModel = viewModel;
@@ -68,6 +96,12 @@ public class MainController {
     private void initializeView() {
         themeBox.setItems(FXCollections.observableArrayList(themes.keySet()));
         themeBox.setValue("Primer Light (Default)");
+        newTaskButton.getStyleClass().add(Styles.ACCENT);
+        saveTaskButton.getStyleClass().add(Styles.ACCENT);
+        focusSearchButton.getStyleClass().add(Styles.ACCENT);
+        minimizeButton.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.FLAT);
+        maximizeButton.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.FLAT);
+        closeButton.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.FLAT, Styles.DANGER);
         statusFilter.setItems(FXCollections.observableArrayList(TaskStatus.values()));
         priorityFilter.setItems(FXCollections.observableArrayList(Priority.values()));
         dueRangeFilter.setItems(FXCollections.observableArrayList(TaskFilter.DueRange.values()));
@@ -88,8 +122,24 @@ public class MainController {
         dueColumn.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getDueDateTime() == null ? "" : c.getValue().getDueDateTime().toString()));
         recurrenceColumn.setCellValueFactory(c -> new SimpleStringProperty(viewModel.recurrenceSummary(c.getValue())));
         tagsColumn.setCellValueFactory(c -> new SimpleStringProperty(String.join(",", c.getValue().getTags())));
-        referenceColumn.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getReferences().isEmpty() ? "" : c.getValue().getReferences().get(0)));
         markdownColumn.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getMarkdownPath()));
+        markdownColumn.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setTooltip(null);
+                if (empty || item == null || item.isBlank()) {
+                    setText(null);
+                    return;
+                }
+
+                setText(Path.of(item).getFileName().toString());
+                Tooltip preview = new Tooltip(readMarkdownPreview(item));
+                preview.setWrapText(true);
+                preview.setMaxWidth(540);
+                setTooltip(preview);
+            }
+        });
 
         taskTable.setRowFactory(tv -> new TableRow<>() {
             @Override
@@ -144,10 +194,10 @@ public class MainController {
     @FXML
     public void saveTask() {
         if (markdownPathField.getText() == null || markdownPathField.getText().isBlank()) {
-            markdownPathField.setText(buildMarkdownPathFromTitle(titleField.getText(), selectedMarkdownFolder).toString());
+            markdownPathField.setText(buildDefaultMarkdownPath(selectedMarkdownFolder).toString());
         }
         viewModel.saveTask(editingTaskId, titleField.getText(), summaryArea.getText(), dueDatePicker.getValue(), dueTimeField.getText(),
-                priorityBox.getValue(), statusBox.getValue(), tagsField.getText(), refsField.getText(), markdownPathField.getText(),
+                priorityBox.getValue(), statusBox.getValue(), tagsField.getText(), markdownPathField.getText(),
                 recurrenceBox.getValue(), recurrenceEndDatePicker.getValue(), reminderEnabledBox.isSelected(),
                 reminderMinutesSpinner.getValue(), overdueRepeatSpinner.getValue(), reminderSoundBox.isSelected());
         clearForm();
@@ -179,7 +229,111 @@ public class MainController {
         var dir = chooser.showDialog(stage);
         if (dir == null) return;
         selectedMarkdownFolder = dir.toPath();
-        markdownPathField.setText(buildMarkdownPathFromTitle(titleField.getText(), selectedMarkdownFolder).toString());
+        markdownPathField.setText(buildDefaultMarkdownPath(selectedMarkdownFolder).toString());
+    }
+
+    @FXML
+    public void onWindowBarPressed(javafx.scene.input.MouseEvent event) {
+        if (stage == null) return;
+        dragOffsetX = event.getSceneX();
+        dragOffsetY = event.getSceneY();
+    }
+
+    @FXML
+    public void onWindowBarDragged(javafx.scene.input.MouseEvent event) {
+        if (stage == null || windowMaximized) return;
+        stage.setX(event.getScreenX() - dragOffsetX);
+        stage.setY(event.getScreenY() - dragOffsetY);
+    }
+
+    @FXML
+    public void minimizeWindow() {
+        if (stage != null) stage.setIconified(true);
+    }
+
+    @FXML
+    public void maximizeWindow() {
+        if (stage == null) return;
+        if (!windowMaximized) {
+            restoreX = stage.getX();
+            restoreY = stage.getY();
+            restoreWidth = stage.getWidth();
+            restoreHeight = stage.getHeight();
+            Rectangle2D bounds = Screen.getScreensForRectangle(stage.getX(), stage.getY(), stage.getWidth(), stage.getHeight())
+                    .stream()
+                    .findFirst()
+                    .orElse(Screen.getPrimary())
+                    .getVisualBounds();
+            stage.setX(bounds.getMinX());
+            stage.setY(bounds.getMinY());
+            stage.setWidth(bounds.getWidth());
+            stage.setHeight(bounds.getHeight());
+            windowMaximized = true;
+            return;
+        }
+
+        stage.setX(restoreX);
+        stage.setY(restoreY);
+        stage.setWidth(restoreWidth);
+        stage.setHeight(restoreHeight);
+        windowMaximized = false;
+    }
+
+    @FXML
+    public void closeWindow() {
+        if (stage != null) stage.close();
+    }
+
+    public void applyUiState(UiStateStore.UiState state) {
+        if (state == null) return;
+        if (state.theme() != null && themes.containsKey(state.theme())) {
+            themeBox.setValue(state.theme());
+        }
+        applyTheme();
+
+        selectedMarkdownFolder = state.notesFolder() == null ? selectedMarkdownFolder : state.notesFolder();
+        notificationsMasterToggle.setSelected(state.notificationsEnabled());
+        viewModel.setNotificationsEnabled(state.notificationsEnabled());
+
+        if (stage != null) {
+            if (state.windowWidth() > 0 && state.windowHeight() > 0) {
+                stage.setWidth(Math.max(state.windowWidth(), stage.getMinWidth()));
+                stage.setHeight(Math.max(state.windowHeight(), stage.getMinHeight()));
+            }
+            if (state.windowX() >= 0 && state.windowY() >= 0) {
+                stage.setX(state.windowX());
+                stage.setY(state.windowY());
+                if (!isWindowVisibleOnAnyScreen(stage.getX(), stage.getY(), stage.getWidth(), stage.getHeight())) {
+                    centerStageOnPrimaryScreen();
+                }
+            } else {
+                centerStageOnPrimaryScreen();
+            }
+            if (state.windowMaximized()) {
+                maximizeWindow();
+            }
+        }
+        clearForm();
+    }
+
+    public UiStateStore.UiState captureUiState() {
+        double x = stage == null ? -1 : stage.getX();
+        double y = stage == null ? -1 : stage.getY();
+        double w = stage == null ? -1 : stage.getWidth();
+        double h = stage == null ? -1 : stage.getHeight();
+        if (windowMaximized) {
+            x = restoreX;
+            y = restoreY;
+            w = restoreWidth;
+            h = restoreHeight;
+        }
+        return new UiStateStore.UiState(
+                themeBox.getValue(),
+                notificationsMasterToggle.isSelected(),
+                selectedMarkdownFolder,
+                windowMaximized,
+                x, y, w, h
+        );
     }
 
     private void clearForm() {
@@ -191,8 +345,7 @@ public class MainController {
         priorityBox.setValue(Priority.MEDIUM);
         statusBox.setValue(TaskStatus.TODO);
         tagsField.clear();
-        refsField.clear();
-        markdownPathField.setText(buildMarkdownPathFromTitle("", selectedMarkdownFolder).toString());
+        markdownPathField.setText(buildDefaultMarkdownPath(selectedMarkdownFolder).toString());
         recurrenceBox.setValue(RecurrenceType.NONE);
         recurrenceEndDatePicker.setValue(null);
     }
@@ -207,7 +360,6 @@ public class MainController {
         priorityBox.setValue(task.getPriority());
         statusBox.setValue(task.getStatus());
         tagsField.setText(String.join(",", task.getTags()));
-        refsField.setText(String.join(",", task.getReferences()));
         markdownPathField.setText(task.getMarkdownPath());
         recurrenceBox.setValue(task.getRecurrenceRule().type());
         recurrenceEndDatePicker.setValue(task.getRecurrenceRule().endDate());
@@ -232,10 +384,37 @@ public class MainController {
         return available;
     }
 
-    private Path buildMarkdownPathFromTitle(String title, Path folder) {
-        String cleaned = title == null ? "" : title.trim().toLowerCase();
-        cleaned = cleaned.replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "");
-        if (cleaned.isBlank()) cleaned = "task-" + System.currentTimeMillis();
-        return folder.resolve(cleaned + ".md");
+    private Path buildDefaultMarkdownPath(Path folder) {
+        String timestamp = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-hhmmss"));
+        return folder.resolve(timestamp + ".md");
+    }
+
+    private boolean isWindowVisibleOnAnyScreen(double x, double y, double w, double h) {
+        return Screen.getScreens().stream()
+                .map(Screen::getVisualBounds)
+                .anyMatch(bounds -> bounds.intersects(x, y, w, h));
+    }
+
+    private void centerStageOnPrimaryScreen() {
+        if (stage == null) return;
+        Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+        double x = bounds.getMinX() + (bounds.getWidth() - stage.getWidth()) / 2;
+        double y = bounds.getMinY() + (bounds.getHeight() - stage.getHeight()) / 2;
+        stage.setX(Math.max(bounds.getMinX(), x));
+        stage.setY(Math.max(bounds.getMinY(), y));
+    }
+
+    private String readMarkdownPreview(String pathValue) {
+        try {
+            Path path = Path.of(pathValue);
+            if (Files.notExists(path)) return "File not found:\n" + path;
+            String content = Files.readString(path);
+            if (content.length() > 2000) {
+                return content.substring(0, 2000) + "\n\n...";
+            }
+            return content.isBlank() ? "(Empty file)" : content;
+        } catch (IOException | RuntimeException e) {
+            return "Unable to read file preview.";
+        }
     }
 }

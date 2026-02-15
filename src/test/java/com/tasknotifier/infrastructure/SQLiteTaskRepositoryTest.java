@@ -20,7 +20,7 @@ class SQLiteTaskRepositoryTest {
         SQLiteTaskRepository repo = new SQLiteTaskRepository(db);
 
         Task saved = repo.save(new Task(null, "Persist", "", LocalDateTime.now(), Priority.LOW, TaskStatus.TODO,
-                List.of("tag"), List.of("ref"), "notes/persist.md", RecurrenceRule.none(), ReminderSettings.defaults(), LocalDateTime.now()));
+                List.of("tag"), "task-detail/persist.md", RecurrenceRule.none(), ReminderSettings.defaults(), LocalDateTime.now()));
         assertNotNull(saved.getId());
         assertEquals(1, repo.findAll().size());
 
