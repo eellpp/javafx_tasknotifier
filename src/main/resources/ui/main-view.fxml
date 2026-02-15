@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml" fx:controller="com.tasknotifier.ui.MainController" stylesheets="@main.css">
+    <top>
+        <VBox spacing="8" BorderPane.alignment="CENTER">
+            <padding><Insets top="10" right="12" bottom="10" left="12"/></padding>
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Label text="Task Notifier v1" styleClass="title"/>
+                <Button text="New Task (Ctrl+N)" onAction="#newTask"/>
+                <Button text="Save Task (Ctrl+S)" onAction="#saveTask"/>
+                <Button text="Focus Search (Ctrl+F)" onAction="#focusSearch"/>
+                <CheckBox fx:id="notificationsMasterToggle" text="Notifications ON" selected="true" onAction="#setNotificationMaster"/>
+            </HBox>
+            <HBox spacing="16">
+                <Label text="Overdue:"/><Label fx:id="overdueCountLabel" styleClass="overdue-count"/>
+                <Label text="Due Today:"/><Label fx:id="dueTodayCountLabel"/>
+                <Label text="Upcoming:"/><Label fx:id="upcomingCountLabel"/>
+            </HBox>
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <TextField fx:id="searchField" promptText="Search title/summary/tag" onKeyReleased="#applyFilters"/>
+                <ComboBox fx:id="statusFilter" promptText="Status" onAction="#applyFilters"/>
+                <ComboBox fx:id="priorityFilter" promptText="Priority" onAction="#applyFilters"/>
+                <ComboBox fx:id="dueRangeFilter" promptText="Due Range" onAction="#applyFilters"/>
+                <TextField fx:id="tagFilter" promptText="Tag" onKeyReleased="#applyFilters"/>
+            </HBox>
+        </VBox>
+    </top>
+    <center>
+        <SplitPane dividerPositions="0.65">
+            <TableView fx:id="taskTable">
+                <columns>
+                    <TableColumn fx:id="titleColumn" text="Title" prefWidth="190"/>
+                    <TableColumn fx:id="dueColumn" text="Due" prefWidth="160"/>
+                    <TableColumn fx:id="recurrenceColumn" text="Recurrence" prefWidth="160"/>
+                    <TableColumn fx:id="tagsColumn" text="Tags" prefWidth="120"/>
+                    <TableColumn fx:id="referenceColumn" text="Reference" prefWidth="190"/>
+                    <TableColumn fx:id="markdownColumn" text="Markdown File" prefWidth="240"/>
+                </columns>
+            </TableView>
+            <ScrollPane fitToWidth="true">
+                <content>
+                    <VBox spacing="8" prefWidth="360">
+                        <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
+                        <Label text="Task Detail" styleClass="subtitle"/>
+                        <TextField fx:id="titleField" promptText="Title (required)"/>
+                        <TextArea fx:id="summaryArea" promptText="Summary" prefRowCount="3"/>
+                        <DatePicker fx:id="dueDatePicker" promptText="Due date"/>
+                        <TextField fx:id="dueTimeField" promptText="Due time (HH:mm)" text="09:00"/>
+                        <ComboBox fx:id="priorityBox"/>
+                        <ComboBox fx:id="statusBox"/>
+                        <TextField fx:id="tagsField" promptText="Tags (comma-separated)"/>
+                        <TextField fx:id="refsField" promptText="References (comma-separated URLs/email subjects)"/>
+                        <TextField fx:id="markdownPathField" promptText="Markdown path (required)"/>
+                        <Label text="Recurrence" styleClass="subtitle"/>
+                        <ComboBox fx:id="recurrenceBox"/>
+                        <DatePicker fx:id="recurrenceEndDatePicker" promptText="Recurrence end date (optional)"/>
+                        <Label text="Reminders" styleClass="subtitle"/>
+                        <CheckBox fx:id="reminderEnabledBox" text="Task reminder enabled"/>
+                        <HBox spacing="8"><Label text="Minutes before due"/><Spinner fx:id="reminderMinutesSpinner"/></HBox>
+                        <HBox spacing="8"><Label text="Overdue repeat minutes"/><Spinner fx:id="overdueRepeatSpinner"/></HBox>
+                        <CheckBox fx:id="reminderSoundBox" text="Sound enabled"/>
+                    </VBox>
+                </content>
+            </ScrollPane>
+        </SplitPane>
+    </center>
+</BorderPane>
