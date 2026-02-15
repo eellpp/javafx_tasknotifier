@@ -1,0 +1,5 @@
+.title { -fx-font-size: 18px; -fx-font-weight: bold; }
+.subtitle { -fx-font-weight: bold; }
+.overdue-count { -fx-text-fill: #cc0000; -fx-font-weight: bold; }
+.table-row-cell.overdue-row { -fx-background-color: rgba(220, 20, 60, 0.26); }
+.table-row-cell.urgent-row { -fx-background-color: rgba(255, 99, 71, 0.16); }
