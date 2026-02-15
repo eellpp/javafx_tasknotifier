@@ -56,7 +56,10 @@
                         <ComboBox fx:id="statusBox"/>
                         <TextField fx:id="tagsField" promptText="Tags (comma-separated)"/>
                         <TextField fx:id="refsField" promptText="References (comma-separated URLs/email subjects)"/>
-                        <TextField fx:id="markdownPathField" promptText="Markdown path (required)"/>
+                        <HBox spacing="8">
+                            <TextField fx:id="markdownPathField" promptText="Markdown path (required)" HBox.hgrow="ALWAYS"/>
+                            <Button text="Choose Folder" onAction="#chooseMarkdownFolder"/>
+                        </HBox>
                         <Label text="Recurrence" styleClass="subtitle"/>
                         <ComboBox fx:id="recurrenceBox"/>
                         <DatePicker fx:id="recurrenceEndDatePicker" promptText="Recurrence end date (optional)"/>

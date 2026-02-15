@@ -10,7 +10,10 @@ import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.Stage;
 
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -55,6 +58,7 @@ public class MainController {
     private MainViewModel viewModel;
     private Long editingTaskId;
     private final Map<String, Theme> themes = buildThemes();
+    private Path selectedMarkdownFolder = Path.of("notes");
 
     public void setViewModel(MainViewModel viewModel) {
         this.viewModel = viewModel;
@@ -139,6 +143,9 @@ public class MainController {
 
     @FXML
     public void saveTask() {
+        if (markdownPathField.getText() == null || markdownPathField.getText().isBlank()) {
+            markdownPathField.setText(buildMarkdownPathFromTitle(titleField.getText(), selectedMarkdownFolder).toString());
+        }
         viewModel.saveTask(editingTaskId, titleField.getText(), summaryArea.getText(), dueDatePicker.getValue(), dueTimeField.getText(),
                 priorityBox.getValue(), statusBox.getValue(), tagsField.getText(), refsField.getText(), markdownPathField.getText(),
                 recurrenceBox.getValue(), recurrenceEndDatePicker.getValue(), reminderEnabledBox.isSelected(),
@@ -163,6 +170,18 @@ public class MainController {
         searchField.requestFocus();
     }
 
+    @FXML
+    public void chooseMarkdownFolder() {
+        DirectoryChooser chooser = new DirectoryChooser();
+        chooser.setTitle("Select Markdown Folder");
+        chooser.setInitialDirectory(selectedMarkdownFolder.toFile().exists() ? selectedMarkdownFolder.toFile() : Path.of(".").toAbsolutePath().normalize().toFile());
+        Stage stage = (Stage) taskTable.getScene().getWindow();
+        var dir = chooser.showDialog(stage);
+        if (dir == null) return;
+        selectedMarkdownFolder = dir.toPath();
+        markdownPathField.setText(buildMarkdownPathFromTitle(titleField.getText(), selectedMarkdownFolder).toString());
+    }
+
     private void clearForm() {
         editingTaskId = null;
         titleField.clear();
@@ -173,7 +192,7 @@ public class MainController {
         statusBox.setValue(TaskStatus.TODO);
         tagsField.clear();
         refsField.clear();
-        markdownPathField.setText("notes/task-" + System.currentTimeMillis() + ".md");
+        markdownPathField.setText(buildMarkdownPathFromTitle("", selectedMarkdownFolder).toString());
         recurrenceBox.setValue(RecurrenceType.NONE);
         recurrenceEndDatePicker.setValue(null);
     }
@@ -211,5 +230,12 @@ public class MainController {
         available.put("Nord Dark", new NordDark());
         available.put("Dracula", new Dracula());
         return available;
+    }
+
+    private Path buildMarkdownPathFromTitle(String title, Path folder) {
+        String cleaned = title == null ? "" : title.trim().toLowerCase();
+        cleaned = cleaned.replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "");
+        if (cleaned.isBlank()) cleaned = "task-" + System.currentTimeMillis();
+        return folder.resolve(cleaned + ".md");
     }
 }
