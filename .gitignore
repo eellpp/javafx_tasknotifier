@@ -1,0 +1,28 @@
+# Maven/Java build output
+target/
+out/
+*.class
+*.jar
+*.war
+*.ear
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+
+# Runtime/app data
+data/
+dist/
+
+# Local temp files
+*.tmp
+*.swp

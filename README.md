@@ -21,6 +21,53 @@ mvn clean package
 java -jar target/javafx-task-notifier-1.0.0.jar
 ```
 
+## Create Executable (Windows + macOS)
+
+Use `jpackage` to generate native executables/installers.
+
+Important:
+- Build Windows installer on Windows.
+- Build macOS installer on macOS.
+- Install JDK 17+ (includes `jpackage`).
+
+### 1) Build the app JAR first
+```bash
+mvn clean package
+```
+
+### 2) Generate Windows executable (run on Windows)
+```powershell
+jpackage ^
+  --name TaskNotifier ^
+  --app-version 1.0.0 ^
+  --input target ^
+  --main-jar javafx-task-notifier-1.0.0.jar ^
+  --main-class com.tasknotifier.TaskNotifierApplication ^
+  --type exe ^
+  --dest dist
+```
+
+Optional:
+- Use `--type msi` for MSI output.
+- Add icon: `--icon path\\to\\app.ico`
+
+### 3) Generate macOS executable (run on macOS)
+```bash
+jpackage \
+  --name TaskNotifier \
+  --app-version 1.0.0 \
+  --input target \
+  --main-jar javafx-task-notifier-1.0.0.jar \
+  --main-class com.tasknotifier.TaskNotifierApplication \
+  --type dmg \
+  --dest dist
+```
+
+Optional:
+- Add icon: `--icon path/to/app.icns`
+
+Output artifacts are created in `dist/`.
+
 ## Test
 ```bash
 mvn test

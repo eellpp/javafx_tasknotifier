@@ -13,6 +13,8 @@
                 <Button text="New Task (Ctrl+N)" onAction="#newTask"/>
                 <Button text="Save Task (Ctrl+S)" onAction="#saveTask"/>
                 <Button text="Focus Search (Ctrl+F)" onAction="#focusSearch"/>
+                <Label text="Theme"/>
+                <ComboBox fx:id="themeBox" prefWidth="210" onAction="#applyTheme"/>
                 <CheckBox fx:id="notificationsMasterToggle" text="Notifications ON" selected="true" onAction="#setNotificationMaster"/>
             </HBox>
             <HBox spacing="16">

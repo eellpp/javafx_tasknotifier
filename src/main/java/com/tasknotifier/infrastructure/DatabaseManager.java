@@ -1,5 +1,7 @@
 package com.tasknotifier.infrastructure;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -9,12 +11,15 @@ import java.sql.Statement;
 public class DatabaseManager {
 
     private final String jdbcUrl;
+    private final Path dbPath;
 
     public DatabaseManager(Path dbPath) {
-        this.jdbcUrl = "jdbc:sqlite:" + dbPath.toAbsolutePath();
+        this.dbPath = dbPath.toAbsolutePath();
+        this.jdbcUrl = "jdbc:sqlite:" + this.dbPath;
     }
 
     public Connection connection() throws SQLException {
+        ensureParentDirectoryExists();
         return DriverManager.getConnection(jdbcUrl);
     }
 
@@ -56,6 +61,16 @@ public class DatabaseManager {
                 """);
         } catch (SQLException e) {
             throw new IllegalStateException("Database unavailable or corrupt. Please verify the database file.", e);
+        }
+    }
+
+    private void ensureParentDirectoryExists() {
+        Path parent = dbPath.getParent();
+        if (parent == null) return;
+        try {
+            Files.createDirectories(parent);
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot create database directory: " + parent, e);
         }
     }
 }

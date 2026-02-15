@@ -1,8 +1,10 @@
 package com.tasknotifier.ui;
 
+import atlantafx.base.theme.*;
 import com.tasknotifier.application.TaskFilter;
 import com.tasknotifier.application.TaskService;
 import com.tasknotifier.domain.*;
+import javafx.application.Application;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -10,6 +12,8 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class MainController {
 
@@ -21,6 +25,7 @@ public class MainController {
     @FXML private TableColumn<Task, String> referenceColumn;
     @FXML private TableColumn<Task, String> markdownColumn;
     @FXML private TextField searchField;
+    @FXML private ComboBox<String> themeBox;
     @FXML private ComboBox<TaskStatus> statusFilter;
     @FXML private ComboBox<Priority> priorityFilter;
     @FXML private ComboBox<TaskFilter.DueRange> dueRangeFilter;
@@ -49,6 +54,7 @@ public class MainController {
 
     private MainViewModel viewModel;
     private Long editingTaskId;
+    private final Map<String, Theme> themes = buildThemes();
 
     public void setViewModel(MainViewModel viewModel) {
         this.viewModel = viewModel;
@@ -56,6 +62,8 @@ public class MainController {
     }
 
     private void initializeView() {
+        themeBox.setItems(FXCollections.observableArrayList(themes.keySet()));
+        themeBox.setValue("Primer Light (Default)");
         statusFilter.setItems(FXCollections.observableArrayList(TaskStatus.values()));
         priorityFilter.setItems(FXCollections.observableArrayList(Priority.values()));
         dueRangeFilter.setItems(FXCollections.observableArrayList(TaskFilter.DueRange.values()));
@@ -113,8 +121,15 @@ public class MainController {
         menu.getItems().addAll(openFile, markDone, skipOccurrence, delete);
         taskTable.setContextMenu(menu);
 
+        applyTheme();
         applyFilters();
         updateDashboard();
+    }
+
+    @FXML
+    public void applyTheme() {
+        Theme theme = themes.getOrDefault(themeBox.getValue(), new PrimerLight());
+        Application.setUserAgentStylesheet(theme.getUserAgentStylesheet());
     }
 
     @FXML
@@ -184,5 +199,17 @@ public class MainController {
         overdueCountLabel.setText(String.valueOf(s.overdue()));
         dueTodayCountLabel.setText(String.valueOf(s.dueToday()));
         upcomingCountLabel.setText(String.valueOf(s.upcoming()));
+    }
+
+    private Map<String, Theme> buildThemes() {
+        Map<String, Theme> available = new LinkedHashMap<>();
+        available.put("Primer Light (Default)", new PrimerLight());
+        available.put("Primer Dark", new PrimerDark());
+        available.put("Cupertino Light", new CupertinoLight());
+        available.put("Cupertino Dark", new CupertinoDark());
+        available.put("Nord Light", new NordLight());
+        available.put("Nord Dark", new NordDark());
+        available.put("Dracula", new Dracula());
+        return available;
     }
 }
